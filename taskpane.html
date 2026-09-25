@@ -37,6 +37,12 @@
   <button id="ollama" type="button">Check Ollama</button>
   <table id="ollamaResult"></table>
 
-  <script src="taskpane.js?v=4"></script>
+  <!-- GitHub Pages lets browsers cache files for 10 minutes; during the spike the script is
+       fetched fresh on every load so fixes show up at once. -->
+  <script>
+    const s = document.createElement("script");
+    s.src = "taskpane.js?t=" + Date.now();
+    document.body.append(s);
+  </script>
 </body>
 </html>
