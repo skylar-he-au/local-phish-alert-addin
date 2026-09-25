@@ -39,16 +39,18 @@ function showClient() {
 }
 
 // R5 evidence: how the pane learned that the selected message changed.
-const follow = { events: 0, polls: 0, lastId: null, lastVia: "first load" };
+const follow = { events: 0, polls: 0, ticks: 0, handler: "registering…", lastId: null, lastVia: "first load" };
 // Each check gets a number; a check that finishes after a newer one has started drops its
 // results, so the table never mixes two messages.
 let generation = 0;
 
 function showFollow() {
   clear("follow");
+  row("follow", "ItemChanged handler", follow.handler, follow.handler === "registered" ? "ok" : "bad");
   row("follow", "ItemChanged events", String(follow.events));
   row("follow", "Changes found by polling", String(follow.polls), follow.polls ? "bad" : "");
-  row("follow", "Last update", `${follow.lastVia} at ${new Date().toLocaleTimeString()}`);
+  row("follow", "Last update", `${follow.lastVia} at ${follow.lastAt || "?"}`);
+  row("follow", "Pane heartbeat", `${follow.ticks} checks (keeps rising while the pane runs)`);
 }
 
 function currentId(item) {
@@ -81,6 +83,7 @@ async function showMessage(via) {
   const item = Office.context.mailbox.item;
   follow.lastId = currentId(item);
   follow.lastVia = typeof via === "string" ? via : "ItemChanged event";
+  follow.lastAt = new Date().toLocaleTimeString();
   showFollow();
   const showing = document.getElementById("showing");
   if (!item) {
@@ -159,8 +162,14 @@ Office.onReady((info) => {
   Office.context.mailbox.addHandlerAsync(Office.EventType.ItemChanged, () => {
     follow.events++;
     showMessage("ItemChanged event");
+  }, (r) => {
+    follow.handler = r.status === Office.AsyncResultStatus.Succeeded
+      ? "registered" : `refused: ${r.error && (r.error.code + " " + r.error.message)}`;
+    showFollow();
   });
   setInterval(() => {
+    follow.ticks++;
+    showFollow();
     const id = currentId(Office.context.mailbox.item);
     if (id !== follow.lastId) {
       follow.polls++;
