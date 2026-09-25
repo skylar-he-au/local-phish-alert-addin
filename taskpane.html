@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Local Phish Alert (spike)</title>
+  <!-- Office.js must be loaded from Microsoft's CDN; it is the only remote script. -->
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <style>
+    body { font: 14px/1.4 -apple-system, "Segoe UI", sans-serif; margin: 12px; color: #1b1b1b; }
+    h1 { font-size: 16px; margin: 0 0 8px; }
+    h2 { font-size: 13px; margin: 16px 0 4px; text-transform: uppercase; color: #555; }
+    table { border-collapse: collapse; width: 100%; }
+    td { padding: 2px 4px; vertical-align: top; border-bottom: 1px solid #eee; word-break: break-word; }
+    td:first-child { color: #555; white-space: nowrap; width: 1%; }
+    .ok { color: #0a7a2f; } .bad { color: #b3261e; }
+    button { margin-top: 6px; }
+  </style>
+</head>
+<body>
+  <h1>Local Phish Alert: spike</h1>
+  <p id="status">Loading Office.js…</p>
+
+  <h2>Client (R1)</h2>
+  <table id="client"></table>
+
+  <h2>Open message (R4)</h2>
+  <table id="message"></table>
+
+  <h2>Local model (R3)</h2>
+  <p>Asks Ollama on this computer which models are installed. This does not load or run a model.</p>
+  <button id="ollama" type="button">Check Ollama</button>
+  <table id="ollamaResult"></table>
+
+  <script src="taskpane.js"></script>
+</body>
+</html>
