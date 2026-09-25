@@ -7,7 +7,7 @@
            xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides/1.0"
            xsi:type="MailApp">
   <Id>664683df-cc9e-4af7-844c-03131690e8bf</Id>
-  <Version>0.1.0.0</Version>
+  <Version>0.2.0.0</Version>
   <ProviderName>CSIT998 Project 12</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Local Phish Alert (spike)"/>
@@ -87,5 +87,60 @@
         <bt:String id="PaneButton.Tooltip" DefaultValue="Check this email for phishing and BEC on this computer."/>
       </bt:LongStrings>
     </Resources>
+    <!-- V1_1 adds a pinnable task pane (spike R5): the pane stays open and follows the selected message.
+         Clients without V1_1 use the V1_0 definition above. -->
+    <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides/1.1" xsi:type="VersionOverridesV1_1">
+      <Requirements>
+        <bt:Sets DefaultMinVersion="1.5">
+          <bt:Set Name="Mailbox"/>
+        </bt:Sets>
+      </Requirements>
+      <Hosts>
+        <Host xsi:type="MailHost">
+          <DesktopFormFactor>
+            <ExtensionPoint xsi:type="MessageReadCommandSurface">
+              <OfficeTab id="TabDefault">
+                <Group id="msgReadGroup">
+                  <Label resid="Group.Label"/>
+                  <Control xsi:type="Button" id="msgReadOpenPaneButton">
+                    <Label resid="PaneButton.Label"/>
+                    <Supertip>
+                      <Title resid="PaneButton.Label"/>
+                      <Description resid="PaneButton.Tooltip"/>
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Icon.16"/>
+                      <bt:Image size="32" resid="Icon.32"/>
+                      <bt:Image size="80" resid="Icon.80"/>
+                    </Icon>
+                    <Action xsi:type="ShowTaskpane">
+                      <SourceLocation resid="Taskpane.Url"/>
+                      <SupportsPinning>true</SupportsPinning>
+                    </Action>
+                  </Control>
+                </Group>
+              </OfficeTab>
+            </ExtensionPoint>
+          </DesktopFormFactor>
+        </Host>
+      </Hosts>
+      <Resources>
+        <bt:Images>
+          <bt:Image id="Icon.16" DefaultValue="https://skylar-he-au.github.io/local-phish-alert-addin/assets/icon-16.png"/>
+          <bt:Image id="Icon.32" DefaultValue="https://skylar-he-au.github.io/local-phish-alert-addin/assets/icon-32.png"/>
+          <bt:Image id="Icon.80" DefaultValue="https://skylar-he-au.github.io/local-phish-alert-addin/assets/icon-80.png"/>
+        </bt:Images>
+        <bt:Urls>
+          <bt:Url id="Taskpane.Url" DefaultValue="https://skylar-he-au.github.io/local-phish-alert-addin/taskpane.html"/>
+        </bt:Urls>
+        <bt:ShortStrings>
+          <bt:String id="Group.Label" DefaultValue="Local Phish Alert"/>
+          <bt:String id="PaneButton.Label" DefaultValue="Check email"/>
+        </bt:ShortStrings>
+        <bt:LongStrings>
+          <bt:String id="PaneButton.Tooltip" DefaultValue="Check this email for phishing and BEC on this computer."/>
+        </bt:LongStrings>
+      </Resources>
+    </VersionOverrides>
   </VersionOverrides>
 </OfficeApp>
