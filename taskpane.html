@@ -15,11 +15,16 @@
     td:first-child { color: #555; white-space: nowrap; width: 1%; }
     .ok { color: #0a7a2f; } .bad { color: #b3261e; }
     button { margin-top: 6px; }
+    .showing { font-weight: 600; background: #fff4ce; padding: 6px 8px; border-radius: 4px; }
   </style>
 </head>
 <body>
   <h1>Local Phish Alert: spike</h1>
   <p id="status">Loading Office.js…</p>
+  <p id="showing" class="showing"></p>
+
+  <h2>Following the selected message (R5)</h2>
+  <table id="follow"></table>
 
   <h2>Client (R1)</h2>
   <table id="client"></table>
@@ -32,6 +37,6 @@
   <button id="ollama" type="button">Check Ollama</button>
   <table id="ollamaResult"></table>
 
-  <script src="taskpane.js"></script>
+  <script src="taskpane.js?v=3"></script>
 </body>
 </html>
