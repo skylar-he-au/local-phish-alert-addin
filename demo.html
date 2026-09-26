@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Local Phish Alert: demo inbox</title>
+</head>
+<body class="demo">
+  <header>
+    <h1>Demo inbox and email check</h1>
+    <p>Emails are read on this computer and checked by the local AI. Nothing is uploaded.</p>
+    <div class="pick">
+      <label class="primary">Open the demo folder<input type="file" id="folder" webkitdirectory hidden></label>
+      <label>Check saved emails (.eml)<input type="file" id="files" accept=".eml,message/rfc822" multiple hidden></label>
+      <label class="quiet"><input type="checkbox" id="presenter"> Presenter notes</label>
+    </div>
+    <p id="hint" class="status"></p>
+  </header>
+  <main>
+    <ul id="list" aria-label="Emails"></ul>
+    <section id="reader" aria-live="polite">
+      <p id="empty" class="status">Open the demo folder (demo/emails in the project), choose saved .eml files, or drop
+        them here. Links and images in the emails are removed before they are shown.</p>
+      <article id="msg" hidden>
+        <h2 id="subject"></h2>
+        <p id="from" class="meta"></p>
+        <p id="note" class="note" hidden></p>
+        <div id="result"></div>
+        <iframe id="body" title="Email body" sandbox="" referrerpolicy="no-referrer"></iframe>
+      </article>
+    </section>
+  </main>
+  <footer>Demo samples: Phishing Pot (CC BY-NC 4.0), Apache SpamAssassin public corpus, Enron corpus, and the team's synthetic BEC set.</footer>
+  <!-- Loaded like taskpane.html: build.json names the current code folder. -->
+  <script type="module">
+    const build = await fetch("build.json?t=" + Date.now()).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    const dir = build ? build.dir : "src";
+    const css = Object.assign(document.createElement("link"), { rel: "stylesheet", href: `${dir}/style.css` });
+    document.head.append(css);
+    await import(`./${dir}/demo.js`);
+  </script>
+</body>
+</html>

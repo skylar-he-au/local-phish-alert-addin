@@ -6,53 +6,6 @@
   <title>Local Phish Alert</title>
   <!-- Office.js must be loaded from Microsoft's CDN; it is the only remote script. -->
   <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
-  <style>
-    :root {
-      --fg: #1b1b1b; --muted: #5c5c5c; --line: #e3e3e3; --bg: #ffffff;
-      --danger: #b3261e; --danger-bg: #fdecea; --safe: #0a7a2f; --safe-bg: #e8f5ec;
-      --neutral: #6b5400; --neutral-bg: #fff4ce;
-    }
-    body { font: 13px/1.45 -apple-system, "Segoe UI", system-ui, sans-serif; margin: 12px; color: var(--fg); background: var(--bg); }
-    .which { margin: 0 0 8px; color: var(--muted); overflow-wrap: anywhere; }
-    .label { color: var(--muted); }
-    .card { border-radius: 8px; padding: 10px 12px; border: 1px solid transparent; }
-    .card.danger { background: var(--danger-bg); border-color: #f3b8b2; --accent: var(--danger); }
-    .card.safe { background: var(--safe-bg); border-color: #b5dcc1; --accent: var(--safe); }
-    .card.neutral { background: var(--neutral-bg); border-color: #f0dc8c; --accent: var(--neutral); }
-    .title { font-size: 14px; margin: 0; color: var(--accent); display: flex; gap: 8px; align-items: center; }
-    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; }
-    .card p { margin: 6px 0 0; overflow-wrap: anywhere; }
-    .card ul { margin: 6px 0 0; padding-left: 18px; overflow-wrap: anywhere; }
-    .card li + li { margin-top: 3px; }
-    .reasons { font-weight: 500; }
-    .problem { color: var(--muted); }
-    details { margin-top: 8px; }
-    summary { cursor: pointer; color: var(--muted); }
-    .note { display: flex; gap: 8px; align-items: center; color: var(--muted); }
-    .spin { width: 12px; height: 12px; border: 2px solid #c9b25a; border-top-color: transparent; border-radius: 50%; animation: s 0.8s linear infinite; flex: none; }
-    @keyframes s { to { transform: rotate(360deg); } }
-    .status { color: var(--muted); margin: 10px 0 0; }
-    .again { margin-top: 8px; font: inherit; padding: 4px 10px; }
-    .mono { font: 11px/1.4 ui-monospace, Menlo, monospace; overflow-wrap: anywhere; padding-left: 16px; }
-    button { font: inherit; }
-    button.link { border: 0; background: none; padding: 0; color: #0f6cbd; cursor: pointer; text-decoration: underline; }
-    button.primary { background: #0f6cbd; color: #fff; border: 1px solid #0f6cbd; border-radius: 4px; padding: 4px 10px; cursor: pointer; }
-    .confirm { margin-top: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
-    .confirm p { margin: 0 0 8px; }
-    .row { display: flex; gap: 8px; flex-wrap: wrap; }
-    .trust, .known { margin-top: 8px; }
-    .links { margin: 12px 0 0; }
-    .back { margin-bottom: 8px; }
-    h1.page { font-size: 16px; margin: 4px 0 8px; }
-    .set { border-top: 1px solid var(--line); padding: 8px 0; }
-    .set h2 { font-size: 12px; text-transform: uppercase; color: var(--muted); margin: 0 0 6px; }
-    .set p { margin: 4px 0; }
-    .ok { color: var(--safe); } .bad { color: var(--danger); }
-    progress { width: 100%; }
-    ul.trusted { list-style: none; padding: 0; margin: 6px 0 0; }
-    ul.trusted li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
-    footer { margin-top: 14px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
-  </style>
 </head>
 <body>
   <main id="app"><p class="which">Loading…</p></main>
@@ -63,7 +16,10 @@
        code is loaded from src/. -->
   <script type="module">
     const build = await fetch("build.json?t=" + Date.now()).then((r) => (r.ok ? r.json() : null)).catch(() => null);
-    await import(build ? `./${build.dir}/pane.js` : "./src/pane.js");
+    const dir = build ? build.dir : "src";
+    const css = Object.assign(document.createElement("link"), { rel: "stylesheet", href: `${dir}/style.css` });
+    document.head.append(css);
+    await import(`./${dir}/pane.js`);
   </script>
 </body>
 </html>
