@@ -4,6 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Local Phish Alert: demo inbox</title>
+  <!-- Outlook shows this page as a dialog only if it loads Office.js and reports ready;
+       on its own in a browser the page works the same. -->
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <script>Office.onReady(() => {});</script>
 </head>
 <body class="demo">
   <header>

@@ -3,8 +3,9 @@
 // with the same code as in Outlook and shown with links and images removed. Files are read
 // in the browser and never uploaded; as everywhere, only Ollama on localhost is contacted.
 //
-// The page works on its own in a browser and as a dialog opened from the pane's Settings.
-// It has no access to the mailbox, so the trust list does not apply here.
+// The page works on its own in a browser and as a dialog opened from the pane's Settings
+// (demo.html loads Office.js for that). It has no access to the mailbox, so the trust list
+// does not apply here.
 
 import { checkBytes } from "./check.js";
 import { safeHtml, FRAME_HEAD } from "./sanitize.js";
