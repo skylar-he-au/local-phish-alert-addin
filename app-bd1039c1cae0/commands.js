@@ -3,12 +3,16 @@
 // cannot be pinned (Outlook.com, R5).
 
 import { checkItem, showBar, CheckError } from "./check.js";
+import { trusted } from "./store.js";
 
 export async function checkMessage(event) {
   const item = Office.context.mailbox.item;
   try {
     await showBar(item, { alert: { kind: "checking" } });
-    await showBar(item, await checkItem(item));
+    // No pane is open to explain a long wait, so the bar says what may be holding it up,
+    // and the model gets less time than in the pane.
+    const r = await checkItem(item, { trusted: trusted(), timeoutMs: 60000, onUpdate: (u) => { if (u.slow) showBar(item, u); } });
+    await showBar(item, r);
   } catch (err) {
     await showBar(item, err instanceof CheckError ? err : new CheckError("failed", String(err && err.message)));
   } finally {

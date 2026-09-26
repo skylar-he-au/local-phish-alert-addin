@@ -5,7 +5,7 @@
 // parses exactly what the evaluation parsed. Nothing leaves this page except the model
 // request, which the core sends to Ollama on localhost only (NFR-1).
 
-import { parseEmail, runRules, decide, alert, pendingAlert, classify, cpSlice } from "./core/index.js";
+import { parseEmail, runRules, authenticatedSender, decide, alert, pendingAlert, classify, cpSlice } from "./core/index.js";
 
 export class CheckError extends Error {
   constructor(code, detail) {
@@ -47,26 +47,42 @@ export function modelProblem(error) {
   return "not_reachable";
 }
 
+// After this long without an answer the user is told the browser may be waiting for them
+// to allow local-network access (R8): until they do, the request to Ollama just waits.
+export const SLOW_MS = 8000;
+
 /**
- * Check an email. `onUpdate` receives the intermediate "checking" result while the model
- * runs. Returns {subject, from, alert, rules, model}, where model is null when the model
- * was not needed, or {probability, latency_s, error, problem}.
+ * Check an email. `trusted` is the user's trust list (store.js). `onUpdate` receives the
+ * intermediate "checking" result while the model runs, again with `slow: true` if the
+ * model has not answered after SLOW_MS. Returns {subject, from, senderKey, alert, rules,
+ * model}, where model is null when the model was not needed, or {probability,
+ * latency_s, error, problem}.
  */
-export async function checkBytes(bytes, { onUpdate = () => {}, classifyImpl = classify } = {}) {
+export async function checkBytes(bytes, { onUpdate = () => {}, classifyImpl = classify, trusted = new Set(), timeoutMs } = {}) {
   const email = parseEmail(bytes);
   const rules = runRules(email);
-  const base = { subject: email.subject, from: email.from, rules };
-  if (rules.strong.length) {
-    return { ...base, alert: alert(email, rules, decide(rules, null)), model: null };
+  // who the mail server confirmed sent it (D20), and whether the user trusts them (FR-6)
+  const senderKey = authenticatedSender(email);
+  const known = senderKey && trusted.has(senderKey) ? "trusted" : null;
+  const base = { subject: email.subject, from: email.from, senderKey, rules };
+  const show = (decision, reason = "") => alert(email, rules, decision, reason, 3, senderKey);
+  if (rules.strong.length || known) return { ...base, alert: show(decide(rules, null, known)), model: null };
+
+  const pending = { ...base, alert: pendingAlert(email, rules), model: null };
+  onUpdate(pending);
+  const slow = setTimeout(() => onUpdate({ ...pending, slow: true }), SLOW_MS);
+  let m;
+  try {
+    m = await classifyImpl(email, timeoutMs ? { timeoutMs } : {});
+  } finally {
+    clearTimeout(slow);
   }
-  onUpdate({ ...base, alert: pendingAlert(email, rules), model: null });
-  const m = await classifyImpl(email);
   if (m.error) {
     const model = { probability: null, latency_s: m.latency_s, error: m.error, problem: modelProblem(m.error) };
-    return { ...base, alert: alert(email, rules, decide(rules, null)), model };
+    return { ...base, alert: show(decide(rules, null)), model };
   }
   const model = { probability: m.phishing_probability, latency_s: m.latency_s, error: "", problem: null };
-  return { ...base, alert: alert(email, rules, decide(rules, m.phishing_probability), m.reason), model };
+  return { ...base, alert: show(decide(rules, m.phishing_probability), m.reason), model };
 }
 
 export async function checkItem(item, options) {
@@ -89,9 +105,14 @@ export function barFor(result) {
       : "Local Phish Alert could not check this email.");
   }
   const a = result.alert;
-  if (a.kind === "checking") return { type: T.ProgressIndicator, message: "Local Phish Alert is checking this email on your computer…" };
+  if (a.kind === "checking") {
+    return { type: T.ProgressIndicator, message: result.slow
+      ? "Still checking. If your browser asks to allow access to apps on this computer, choose Allow."
+      : "Local Phish Alert is checking this email on your computer…" };
+  }
   if (a.kind === "danger") return { type: T.ErrorMessage, message: clip(`Likely phishing or scam. ${a.reasons[0] || ""}`.trim()) };
   if (a.kind === "safe") {
+    if (a.known_sender) return info(`No warning signs found. You trust ${a.known_sender.key}, so the local AI was not asked.`);
     return info(a.tip ? "No warning signs found. Before you act on a payment or phone request, check with the sender another way."
       : "Local Phish Alert found no warning signs (checked on this computer).");
   }

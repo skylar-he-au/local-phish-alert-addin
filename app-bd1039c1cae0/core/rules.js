@@ -93,20 +93,32 @@ export const TRUSTED_AUTHSERV = new Set(["mx.google.com"]);
 
 /**
  * Trust key for the sender if the user's own receiving mail server confirmed who sent
- * it, else null: the topmost Authentication-Results from a trusted authserv-id, DMARC
- * pass, aligned with From. The key is the registrable domain, or the full address for
- * free mailbox providers.
+ * it, else null. The key is the registrable domain, or the full address for free
+ * mailbox providers. Only the topmost Authentication-Results counts: anything lower
+ * down could have been written by the sender.
+ *
+ * - "legacy" (pipeline/rules.py): the header comes from a trusted authserv-id, DMARC
+ *   passes, and header.from is aligned with From.
+ * - "compauth" (the product, decision D20): additionally, Microsoft's composite verdict
+ *   compauth=pass with a 1xx reason and header.from aligned with From. Exchange Online
+ *   and Outlook.com stamp this header on every message they receive, and it accounts
+ *   for forwarding gateways (reason 130: a trusted ARC sealer), where DMARC fails on
+ *   genuine mail (R9).
  */
-export function authenticatedSender(e, trustedAuthserv = TRUSTED_AUTHSERV) {
+export function authenticatedSender(e, { auth = "compauth", trustedAuthserv = TRUSTED_AUTHSERV } = {}) {
   const a = strip(e.auth_results || "").toLowerCase();
+  const fd = registrable(domainOf(e.from));
+  const m = /header\.from=([a-z0-9.-]+)/.exec(a);
+  const key = () => (FREEMAIL.has(fd) ? addressOf(e.from) || null : fd);
+  if (auth === "compauth") {
+    const ca = COMPAUTH.exec(a);
+    if (ca && ca[1] === "pass" && /^1/.test(ca[2] || "") && fd && m && registrable(m[1]) === fd) return key();
+  }
   const semi = a.indexOf(";");
   const authserv = strip(semi < 0 ? a : a.slice(0, semi));
   if (!trustedAuthserv.has(authserv) || !a.includes("dmarc=pass")) return null;
-  const fd = registrable(domainOf(e.from));
-  const m = /header\.from=([a-z0-9.-]+)/.exec(a);
   if (!fd || (m && registrable(m[1]) !== fd)) return null;
-  if (FREEMAIL.has(fd)) return addressOf(e.from) || null;
-  return fd;
+  return key();
 }
 
 // Microsoft's composite authentication verdict (R9, decision D19). Exchange Online and

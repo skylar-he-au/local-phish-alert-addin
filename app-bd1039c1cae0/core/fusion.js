@@ -12,7 +12,7 @@
 // bank-detail change, or a switch to the phone.
 
 import { strip, stripChars, cpSlice } from "./py.js";
-import { brandImpersonation, urgencyPhrases, riskyAttachments, paymentPhrases, domainOf,
+import { brandImpersonation, urgencyPhrases, riskyAttachments, paymentPhrases, PAYMENT, domainOf,
   registrable, addressOf } from "./rules.js";
 
 export const T_MODEL = 0.5;
@@ -74,7 +74,9 @@ function ruleSentence(name, email) {
   if (name === "links") return "A link looks like it goes to one website but actually goes somewhere else.";
   if (name === "urgency") {
     const hits = urgencyPhrases(email);
-    const quote = hits.length ? ` ("${hits[0]}")` : "";
+    const pressure = hits.filter((h) => !PAYMENT.includes(h));
+    if (hits.length && !pressure.length) return `It asks about a payment or bank details ("${hits[0]}").`;
+    const quote = pressure.length ? ` ("${pressure[0]}")` : "";
     return `It pressures you to act quickly or secretly${quote}.`;
   }
   if (name === "obfuscation") return "Parts of the email are disguised in a way normal senders rarely use.";
