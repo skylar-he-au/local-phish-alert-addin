@@ -210,7 +210,8 @@ function dataSection(onRemoved) {
 // The demo inbox and saved-email check (FR-8) open in a large Outlook dialog, or a new
 // window where dialogs are unavailable.
 function openDemo() {
-  const url = new URL("demo.html", document.baseURI).href;
+  // the build name in the address keeps browsers from using a copy cached before this build
+  const url = new URL(`demo.html?v=${BUILD}`, document.baseURI).href;
   const ui = Office.context.ui;
   if (!ui || !ui.displayDialogAsync) return window.open(url, "_blank");
   ui.displayDialogAsync(url, { height: 85, width: 80, displayInIframe: true }, (r) => {
