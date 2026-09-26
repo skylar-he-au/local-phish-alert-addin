@@ -81,22 +81,30 @@ function showBanner(item, gen) {
 const AUTH_HEADERS = /^(Authentication-Results|ARC-Authentication-Results|Received-SPF|X-MS-Exchange-Organization-AuthAs|X-MS-Exchange-Organization-AuthSource):.*(?:\r?\n[ \t].*)*/gim;
 
 function showAuthHeaders(headers) {
-  if (!document.getElementById("auth")) {
-    // taskpane.html may still be the cached copy without this table
+  let box = document.getElementById("auth");
+  if (!box) {
+    // taskpane.html may still be the cached copy without this section
     const h = document.createElement("h2");
-    const t = document.createElement("table");
     h.textContent = "Authentication headers (R9)";
-    t.id = "auth";
-    document.getElementById("message").after(h, t);
+    box = document.createElement("div");
+    box.id = "auth";
+    document.getElementById("showing").after(h, box);
   }
-  clear("auth");
-  const found = headers.match(AUTH_HEADERS) || [];
+  box.replaceChildren();
+  const add = (tag, text, bold) => {
+    const el = document.createElement(tag);
+    el.textContent = text;
+    el.style.cssText = "margin:4px 0;white-space:pre-wrap;word-break:break-all;font-size:12px;"
+      + (bold ? "font-weight:600;" : "font-family:ui-monospace,Menlo,monospace;");
+    box.append(el);
+  };
   const compauth = [...headers.matchAll(/compauth=(\w+)(?:\s+reason=(\w+))?/gi)].map((m) => m[1] + (m[2] ? ` reason=${m[2]}` : ""));
-  row("auth", "compauth", compauth.join("; ") || "(none)", compauth.length ? "" : "bad");
-  found.forEach((h, i) => {
+  add("p", `compauth: ${compauth.join("; ") || "(none)"}`, true);
+  (headers.match(AUTH_HEADERS) || []).forEach((h, i) => {
     const text = h.replace(/\s+/g, " ");
     const name = text.slice(0, text.indexOf(":"));
-    row("auth", `${i + 1}. ${name}`, text.slice(name.length + 1).trim());
+    add("p", `${i + 1}. ${name}`, true);
+    add("pre", text.slice(name.length + 1).trim());
   });
 }
 
