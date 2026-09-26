@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Spike R1 (MVP-PRD §11): the smallest Outlook add-in that loads and reads the open message.
-     Hosted on GitHub Pages (spike R2): static files only; no email content is sent there. -->
+<!-- Local Phish Alert for Outlook (MVP-PRD M3). Hosted on GitHub Pages (D14): static files only;
+     no email content is sent there. Two commands on a message: open the panel (pinnable, so it
+     follows the selected message on work/school accounts), or a one-click check that shows the
+     verdict in the message's notification bar only (D17). -->
 <OfficeApp xmlns="http://schemas.microsoft.com/office/appforoffice/1.1"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xmlns:bt="http://schemas.microsoft.com/office/officeappbasictypes/1.0"
            xmlns:mailappor="http://schemas.microsoft.com/office/mailappversionoverrides/1.0"
            xsi:type="MailApp">
   <Id>664683df-cc9e-4af7-844c-03131690e8bf</Id>
-  <Version>0.2.0.0</Version>
+  <Version>1.0.0.0</Version>
   <ProviderName>CSIT998 Project 12</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
-  <DisplayName DefaultValue="Local Phish Alert (spike)"/>
+  <DisplayName DefaultValue="Local Phish Alert"/>
   <Description DefaultValue="Checks the open email for phishing and BEC on this computer only."/>
   <IconUrl DefaultValue="https://skylar-he-au.github.io/local-phish-alert-addin/assets/icon-64.png"/>
   <HighResolutionIconUrl DefaultValue="https://skylar-he-au.github.io/local-phish-alert-addin/assets/icon-128.png"/>
@@ -45,6 +47,7 @@
     <Hosts>
       <Host xsi:type="MailHost">
         <DesktopFormFactor>
+          <FunctionFile resid="Commands.Url"/>
           <ExtensionPoint xsi:type="MessageReadCommandSurface">
             <OfficeTab id="TabDefault">
               <Group id="msgReadGroup">
@@ -64,6 +67,21 @@
                     <SourceLocation resid="Taskpane.Url"/>
                   </Action>
                 </Control>
+                <Control xsi:type="Button" id="msgReadQuickCheckButton">
+                  <Label resid="QuickButton.Label"/>
+                  <Supertip>
+                    <Title resid="QuickButton.Label"/>
+                    <Description resid="QuickButton.Tooltip"/>
+                  </Supertip>
+                  <Icon>
+                    <bt:Image size="16" resid="Icon.16"/>
+                    <bt:Image size="32" resid="Icon.32"/>
+                    <bt:Image size="80" resid="Icon.80"/>
+                  </Icon>
+                  <Action xsi:type="ExecuteFunction">
+                    <FunctionName>checkMessage</FunctionName>
+                  </Action>
+                </Control>
               </Group>
             </OfficeTab>
           </ExtensionPoint>
@@ -78,16 +96,19 @@
       </bt:Images>
       <bt:Urls>
         <bt:Url id="Taskpane.Url" DefaultValue="https://skylar-he-au.github.io/local-phish-alert-addin/taskpane.html"/>
+        <bt:Url id="Commands.Url" DefaultValue="https://skylar-he-au.github.io/local-phish-alert-addin/commands.html"/>
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="Group.Label" DefaultValue="Local Phish Alert"/>
-        <bt:String id="PaneButton.Label" DefaultValue="Check email"/>
+        <bt:String id="PaneButton.Label" DefaultValue="Open panel"/>
+        <bt:String id="QuickButton.Label" DefaultValue="Quick check"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="PaneButton.Tooltip" DefaultValue="Check this email for phishing and BEC on this computer."/>
+        <bt:String id="PaneButton.Tooltip" DefaultValue="Open the Local Phish Alert panel. Pin it to check every email you open."/>
+        <bt:String id="QuickButton.Tooltip" DefaultValue="Check this email on this computer and show the result above the message."/>
       </bt:LongStrings>
     </Resources>
-    <!-- V1_1 adds a pinnable task pane (spike R5): the pane stays open and follows the selected message.
+    <!-- V1_1 makes the panel pinnable (spike R5): it stays open and follows the selected message.
          Clients without V1_1 use the V1_0 definition above. -->
     <VersionOverrides xmlns="http://schemas.microsoft.com/office/mailappversionoverrides/1.1" xsi:type="VersionOverridesV1_1">
       <Requirements>
@@ -98,6 +119,7 @@
       <Hosts>
         <Host xsi:type="MailHost">
           <DesktopFormFactor>
+            <FunctionFile resid="Commands.Url"/>
             <ExtensionPoint xsi:type="MessageReadCommandSurface">
               <OfficeTab id="TabDefault">
                 <Group id="msgReadGroup">
@@ -118,6 +140,21 @@
                       <SupportsPinning>true</SupportsPinning>
                     </Action>
                   </Control>
+                  <Control xsi:type="Button" id="msgReadQuickCheckButton">
+                    <Label resid="QuickButton.Label"/>
+                    <Supertip>
+                      <Title resid="QuickButton.Label"/>
+                      <Description resid="QuickButton.Tooltip"/>
+                    </Supertip>
+                    <Icon>
+                      <bt:Image size="16" resid="Icon.16"/>
+                      <bt:Image size="32" resid="Icon.32"/>
+                      <bt:Image size="80" resid="Icon.80"/>
+                    </Icon>
+                    <Action xsi:type="ExecuteFunction">
+                      <FunctionName>checkMessage</FunctionName>
+                    </Action>
+                  </Control>
                 </Group>
               </OfficeTab>
             </ExtensionPoint>
@@ -132,13 +169,16 @@
         </bt:Images>
         <bt:Urls>
           <bt:Url id="Taskpane.Url" DefaultValue="https://skylar-he-au.github.io/local-phish-alert-addin/taskpane.html"/>
+          <bt:Url id="Commands.Url" DefaultValue="https://skylar-he-au.github.io/local-phish-alert-addin/commands.html"/>
         </bt:Urls>
         <bt:ShortStrings>
           <bt:String id="Group.Label" DefaultValue="Local Phish Alert"/>
-          <bt:String id="PaneButton.Label" DefaultValue="Check email"/>
+          <bt:String id="PaneButton.Label" DefaultValue="Open panel"/>
+          <bt:String id="QuickButton.Label" DefaultValue="Quick check"/>
         </bt:ShortStrings>
         <bt:LongStrings>
-          <bt:String id="PaneButton.Tooltip" DefaultValue="Check this email for phishing and BEC on this computer."/>
+          <bt:String id="PaneButton.Tooltip" DefaultValue="Open the Local Phish Alert panel. Pin it to check every email you open."/>
+          <bt:String id="QuickButton.Tooltip" DefaultValue="Check this email on this computer and show the result above the message."/>
         </bt:LongStrings>
       </Resources>
     </VersionOverrides>

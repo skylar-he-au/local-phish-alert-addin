@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Local Phish Alert commands</title>
+  <!-- The function file for the one-click toolbar command (D17). It has no visible page. -->
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <script>
+    // Outlook may call the command as soon as this page loads, so the handler is
+    // registered here at once and waits for the code, which is loaded as in taskpane.html.
+    const code = fetch("build.json?t=" + Date.now())
+      .then((r) => (r.ok ? r.json() : null)).catch(() => null)
+      .then((build) => import(build ? `./${build.dir}/commands.js` : "./src/commands.js"));
+
+    function checkMessage(event) {
+      code.then((m) => m.checkMessage(event), () => event.completed());
+    }
+
+    Office.onReady(() => {});
+    // Newer clients look the handler up by name; older ones call the global function.
+    if (Office.actions && Office.actions.associate) Office.actions.associate("checkMessage", checkMessage);
+  </script>
+</head>
+<body></body>
+</html>

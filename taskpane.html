@@ -3,49 +3,50 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Local Phish Alert (spike)</title>
+  <title>Local Phish Alert</title>
   <!-- Office.js must be loaded from Microsoft's CDN; it is the only remote script. -->
   <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
   <style>
-    body { font: 14px/1.4 -apple-system, "Segoe UI", sans-serif; margin: 12px; color: #1b1b1b; }
-    h1 { font-size: 16px; margin: 0 0 8px; }
-    h2 { font-size: 13px; margin: 16px 0 4px; text-transform: uppercase; color: #555; }
-    table { border-collapse: collapse; width: 100%; }
-    td { padding: 2px 4px; vertical-align: top; border-bottom: 1px solid #eee; word-break: break-word; }
-    td:first-child { color: #555; white-space: nowrap; width: 1%; }
-    .ok { color: #0a7a2f; } .bad { color: #b3261e; }
-    button { margin-top: 6px; }
-    .showing { font-weight: 600; background: #fff4ce; padding: 6px 8px; border-radius: 4px; }
+    :root {
+      --fg: #1b1b1b; --muted: #5c5c5c; --line: #e3e3e3; --bg: #ffffff;
+      --danger: #b3261e; --danger-bg: #fdecea; --safe: #0a7a2f; --safe-bg: #e8f5ec;
+      --neutral: #6b5400; --neutral-bg: #fff4ce;
+    }
+    body { font: 13px/1.45 -apple-system, "Segoe UI", system-ui, sans-serif; margin: 12px; color: var(--fg); background: var(--bg); }
+    .which { margin: 0 0 8px; color: var(--muted); overflow-wrap: anywhere; }
+    .label { color: var(--muted); }
+    .card { border-radius: 8px; padding: 10px 12px; border: 1px solid transparent; }
+    .card.danger { background: var(--danger-bg); border-color: #f3b8b2; --accent: var(--danger); }
+    .card.safe { background: var(--safe-bg); border-color: #b5dcc1; --accent: var(--safe); }
+    .card.neutral { background: var(--neutral-bg); border-color: #f0dc8c; --accent: var(--neutral); }
+    .title { font-size: 14px; margin: 0; color: var(--accent); display: flex; gap: 8px; align-items: center; }
+    .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); flex: none; }
+    .card p { margin: 6px 0 0; overflow-wrap: anywhere; }
+    .card ul { margin: 6px 0 0; padding-left: 18px; overflow-wrap: anywhere; }
+    .card li + li { margin-top: 3px; }
+    .reasons { font-weight: 500; }
+    .problem { color: var(--muted); }
+    details { margin-top: 8px; }
+    summary { cursor: pointer; color: var(--muted); }
+    .note { display: flex; gap: 8px; align-items: center; color: var(--muted); }
+    .spin { width: 12px; height: 12px; border: 2px solid #c9b25a; border-top-color: transparent; border-radius: 50%; animation: s 0.8s linear infinite; flex: none; }
+    @keyframes s { to { transform: rotate(360deg); } }
+    .status { color: var(--muted); margin: 10px 0 0; }
+    .again { margin-top: 8px; font: inherit; padding: 4px 10px; }
+    .mono { font: 11px/1.4 ui-monospace, Menlo, monospace; overflow-wrap: anywhere; padding-left: 16px; }
+    footer { margin-top: 14px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
   </style>
 </head>
 <body>
-  <h1>Local Phish Alert: spike</h1>
-  <p id="status">Loading Office.js…</p>
-  <p id="showing" class="showing"></p>
-
-  <h2>Authentication headers (R9)</h2>
-  <div id="auth"></div>
-
-  <h2>Following the selected message (R5)</h2>
-  <table id="follow"></table>
-
-  <h2>Client (R1)</h2>
-  <table id="client"></table>
-
-  <h2>Open message (R4)</h2>
-  <table id="message"></table>
-
-  <h2>Local model (R3)</h2>
-  <p>Asks Ollama on this computer which models are installed. This does not load or run a model.</p>
-  <button id="ollama" type="button">Check Ollama</button>
-  <table id="ollamaResult"></table>
-
-  <!-- GitHub Pages lets browsers cache files for 10 minutes; during the spike the script is
-       fetched fresh on every load so fixes show up at once. -->
-  <script>
-    const s = document.createElement("script");
-    s.src = "taskpane.js?t=" + Date.now();
-    document.body.append(s);
+  <main id="app"><p class="which">Loading…</p></main>
+  <footer>Checked on this computer. The email is not sent anywhere else.</footer>
+  <!-- GitHub Pages lets browsers cache files for 10 minutes. A build puts the code in a folder
+       named after its content hash and names that folder in build.json, which is always fetched
+       fresh, so a new build takes effect at once. Without build.json (the source tree) the
+       code is loaded from src/. -->
+  <script type="module">
+    const build = await fetch("build.json?t=" + Date.now()).then((r) => (r.ok ? r.json() : null)).catch(() => null);
+    await import(build ? `./${build.dir}/pane.js` : "./src/pane.js");
   </script>
 </body>
 </html>
