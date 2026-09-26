@@ -77,6 +77,29 @@ function showBanner(item, gen) {
   });
 }
 
+// R9: the authentication headers in full, and nothing else from the message.
+const AUTH_HEADERS = /^(Authentication-Results|ARC-Authentication-Results|Received-SPF|X-MS-Exchange-Organization-AuthAs|X-MS-Exchange-Organization-AuthSource):.*(?:\r?\n[ \t].*)*/gim;
+
+function showAuthHeaders(headers) {
+  if (!document.getElementById("auth")) {
+    // taskpane.html may still be the cached copy without this table
+    const h = document.createElement("h2");
+    const t = document.createElement("table");
+    h.textContent = "Authentication headers (R9)";
+    t.id = "auth";
+    document.getElementById("message").after(h, t);
+  }
+  clear("auth");
+  const found = headers.match(AUTH_HEADERS) || [];
+  const compauth = [...headers.matchAll(/compauth=(\w+)(?:\s+reason=(\w+))?/gi)].map((m) => m[1] + (m[2] ? ` reason=${m[2]}` : ""));
+  row("auth", "compauth", compauth.join("; ") || "(none)", compauth.length ? "" : "bad");
+  found.forEach((h, i) => {
+    const text = h.replace(/\s+/g, " ");
+    const name = text.slice(0, text.indexOf(":"));
+    row("auth", `${i + 1}. ${name}`, text.slice(name.length + 1).trim());
+  });
+}
+
 async function showMessage(via) {
   const gen = ++generation;
   clear("message");
@@ -107,6 +130,7 @@ async function showMessage(via) {
       row("message", "All headers", `yes (${headers.length} characters)`, "ok");
       row("message", "Authentication-Results", `${auth.length} header(s)`);
       if (auth.length) row("message", "Topmost", auth[0].replace(/\s+/g, " ").slice(0, 300));
+      showAuthHeaders(headers);
     } else {
       row("message", "All headers", `failed: ${r.error && r.error.message}`, "bad");
     }
