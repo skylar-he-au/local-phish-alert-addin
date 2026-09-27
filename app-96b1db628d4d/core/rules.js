@@ -15,7 +15,18 @@ export const RISKY_EXT = [".exe", ".scr", ".js", ".vbs", ".jar", ".iso", ".img",
   ".bat", ".cmd", ".ps1", ".docm", ".xlsm", ".pptm", ".htm", ".html"];
 export const BRANDS = ["paypal", "microsoft", "office365", "apple", "amazon", "netflix", "google",
   "docusign", "dropbox", "linkedin", "facebook", "chase", "wellsfargo", "hsbc",
-  "coindesk", "binance", "dhl", "fedex", "ups", "irs", "ato", "myGov"];
+  "coindesk", "binance", "dhl", "fedex", "ups", "irs", "ato", "myGov",
+  // added 27 Sep 2026 from public brand-phishing reports (not picked from the misses)
+  "whatsapp", "instagram", "adobe", "outlook", "onedrive", "sharepoint", "zoom",
+  "coinbase", "metamask", "ledger", "usps", "auspost", "australia post", "royal mail",
+  "correios", "dpd", "wells fargo", "bank of america", "citibank", "telstra", "commbank"];
+// A brand's own domains that do not contain its name (genuine mail must not be flagged)
+export const BRAND_DOMAINS = {
+  office365: ["microsoft.com", "office.com"], outlook: ["microsoft.com", "office.com"],
+  onedrive: ["microsoft.com"], sharepoint: ["microsoft.com"],
+  whatsapp: ["facebookmail.com"], instagram: ["facebookmail.com"],
+  "australia post": ["auspost.com.au"], commbank: ["cba.com.au"],
+};
 // BEC-oriented language, not only generic phishing urgency
 export const URGENCY = ["urgent", "immediately", "as soon as possible", "asap", "right away",
   "action required", "final notice", "expires today", "within 24 hours",
@@ -149,13 +160,27 @@ export function rAuth(e, policy = "compauth") {
 }
 
 /** [brand, sending domain] if the display name claims a brand the domain does not back. */
+const SPACED = /(?<![A-Za-z0-9])(?:[A-Za-z][ ._-]){2,}[A-Za-z](?![A-Za-z0-9])/g;
+
+/**
+ * The From display name, lower-cased, with common disguises undone: combining marks
+ * stripped ("A\u073fm\u073fa\u073fz\u073fon" -> "amazon") and spaced letters joined ("D H L" -> "dhl").
+ */
+export function displayName(frm) {
+  let d = frm.split("<")[0].normalize("NFKD").replace(/\p{M}/gu, "");
+  d = d.replace(SPACED, (m) => m.replace(/[ ._-]/g, ""));
+  return d.toLowerCase();
+}
+
 export function brandImpersonation(e) {
   const fd = registrable(domainOf(e.from));
-  const disp = e.from.split("<")[0].toLowerCase();
+  const disp = displayName(e.from);
   for (const b of BRANDS) {
     const bl = b.toLowerCase();
     // whole-word match: short brands ("ato", "ups", "irs") otherwise hit inside names
-    if (new RegExp(`(?<![a-z])${escapeRe(bl)}(?![a-z])`).test(disp) && !fd.includes(bl)) return [b, fd];
+    if (!new RegExp(`(?<![a-z])${escapeRe(bl)}(?![a-z])`).test(disp)) continue;
+    if (fd.includes(bl.replaceAll(" ", "")) || (BRAND_DOMAINS[bl] || []).includes(fd)) continue;
+    return [b, fd];
   }
   return null;
 }
