@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Local Phish Alert</title>
+<meta name="description" content="Download and install Local Phish Alert, an Outlook add-in that checks email for phishing and scams on your own Mac.">
+<link rel="icon" href="assets/icon-32.png">
+<style>
+  :root {
+    --fg: #1b1b1b; --muted: #5c5c5c; --line: #e3e3e3; --bg: #ffffff; --panel: #f6f6f4;
+    --accent: #b3261e; --accent-fg: #ffffff; --note-bg: #fff4ce; --note-line: #f0dc8c;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --fg: #ececec; --muted: #a8a8a8; --line: #333; --bg: #161616; --panel: #1f1f1f;
+      --accent: #e5534b; --accent-fg: #ffffff; --note-bg: #2e2810; --note-line: #5a4c16;
+    }
+  }
+  :root[data-theme="dark"] {
+    --fg: #ececec; --muted: #a8a8a8; --line: #333; --bg: #161616; --panel: #1f1f1f;
+    --accent: #e5534b; --accent-fg: #ffffff; --note-bg: #2e2810; --note-line: #5a4c16;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg); font: 16px/1.55 -apple-system, "Segoe UI", system-ui, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 40px 16px 64px; }
+  header { display: flex; gap: 14px; align-items: center; }
+  header img { width: 48px; height: 48px; border-radius: 10px; }
+  h1 { font-size: 28px; margin: 0; line-height: 1.2; }
+  .lead { font-size: 18px; color: var(--muted); margin: 14px 0 24px; }
+  h2 { font-size: 20px; margin: 40px 0 10px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .get { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+  .btn { display: inline-block; background: var(--accent); color: var(--accent-fg); text-decoration: none; font-weight: 600; padding: 12px 20px; border-radius: 8px; }
+  .btn:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
+  .get p { margin: 10px 0 0; color: var(--muted); font-size: 14px; }
+  ol, ul { padding-left: 22px; }
+  li + li { margin-top: 6px; }
+  .note { background: var(--note-bg); border: 1px solid var(--note-line); border-radius: 8px; padding: 12px 14px; margin: 14px 0; font-size: 15px; }
+  .muted { color: var(--muted); }
+  code { font: 14px ui-monospace, Menlo, monospace; overflow-wrap: anywhere; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { text-align: left; vertical-align: top; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--line); }
+  th { color: var(--muted); font-weight: 600; }
+  a { color: inherit; }
+  footer { margin-top: 48px; color: var(--muted); font-size: 14px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <img src="assets/icon-128.png" alt="">
+    <h1>Local Phish Alert</h1>
+  </header>
+  <p class="lead">An Outlook add-in that checks each email you open for phishing and scams, including fake payment
+    requests from "colleagues". The check runs on your own Mac: email never leaves it.</p>
+
+  <div class="get">
+    <a class="btn" href="https://github.com/skylar-he-au/local-phish-alert-addin/releases/latest/download/LocalPhishAlert.dmg">Download for Mac</a>
+    <p>LocalPhishAlert.dmg · about 1 MB · the installer then downloads Ollama and the AI model (about 2 GB).<br>
+      Needs macOS 14 or later, about 3 GB free, Chrome, and Outlook on the web.</p>
+  </div>
+
+  <h2>Install</h2>
+  <ol>
+    <li>Open <strong>LocalPhishAlert.dmg</strong> from your Downloads folder.</li>
+    <li>Double-click <strong>Install Local Phish Alert</strong>.</li>
+    <li>Follow the steps. The installer sets up everything on the Mac by itself: Ollama (the free app that runs the
+      AI), its setting, and the model. At the end it opens Outlook's add-in page and tells you where to click
+      <em>Add</em>.</li>
+  </ol>
+  <div class="note">
+    <strong>If macOS says the app "cannot be opened" or is from an unidentified developer:</strong> choose
+    <em>Done</em>, open <strong>System Settings → Privacy &amp; Security</strong>, scroll down, choose
+    <strong>Open Anyway</strong> next to the app's name, and confirm. This is needed once per app, because this
+    student project is not signed with a paid Apple developer certificate.
+  </div>
+
+  <h2>Use</h2>
+  <ul>
+    <li><strong>Work or school account (Microsoft 365):</strong> open any email → <em>Apps</em> →
+      <em>Local Phish Alert</em> → <em>Open panel</em>, and pin the panel. From then on every email you open is
+      checked, and the result appears above the email.</li>
+    <li><strong>Outlook.com:</strong> open an email → <em>Apps</em> → <em>Local Phish Alert</em> →
+      <em>Quick check</em>.</li>
+    <li>The first time, Chrome asks whether the site may access apps on this computer. Choose <em>Allow</em>.</li>
+  </ul>
+  <p class="muted">The AI's answer is an opinion. A warning means "check before you act"; no warning does not prove
+    an email is safe. When an email asks for a payment, bank details or a new phone number, check with the sender
+    another way.</p>
+
+  <h2>Uninstall</h2>
+  <ol>
+    <li>Open <strong>LocalPhishAlert.dmg</strong> again (or download it again).</li>
+    <li>Double-click <strong>Uninstall Local Phish Alert</strong> and follow the steps. It deletes the model and the
+      setting, can move Ollama to the Bin too, and opens Outlook's add-in page to remove the add-in there.</li>
+  </ol>
+
+  <h2>What it installs</h2>
+  <table>
+    <tr><th>Part</th><th>Where</th></tr>
+    <tr><td>Ollama, the app that runs the AI</td><td>Applications (skipped if you already have it)</td></tr>
+    <tr><td>The model llama3.2:3b, about 2 GB</td><td>Ollama's folder</td></tr>
+    <tr><td>One setting that lets the add-in, and nothing else new, use Ollama</td><td>A login item in <code>~/Library/LaunchAgents</code></td></tr>
+    <tr><td>The add-in</td><td>Your Outlook; its files are served from this site</td></tr>
+    <tr><td>Senders you choose to trust, if any</td><td>Your own mailbox (add-in settings)</td></tr>
+  </table>
+  <p class="muted">Email content is sent only to Ollama on this Mac (<code>localhost</code>). Nothing is collected,
+    and this site hosts no email.</p>
+
+  <h2>For IT departments</h2>
+  <p>Deploy the add-in to users from the Microsoft 365 admin center → Settings → Integrated apps, with
+    <a href="manifest.xml">manifest.xml</a>. Users then skip step 4 of the installer. The Chrome policy
+    <code>LocalNetworkAccessAllowedForUrls</code> with <code>https://skylar-he-au.github.io</code> removes Chrome's
+    question, and the model can be pre-loaded with <code>ollama pull llama3.2:3b</code>.</p>
+
+  <footer>
+    CSIT998 Project 12, University of Wollongong · a student project, not a commercial product ·
+    uses <a href="https://ollama.com">Ollama</a> and Llama 3.2 (Llama 3.2 Community License)
+  </footer>
+</main>
+</body>
+</html>
