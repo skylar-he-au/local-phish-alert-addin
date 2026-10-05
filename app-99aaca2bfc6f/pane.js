@@ -9,7 +9,7 @@
 import { checkItem, showBar, CheckError } from "./check.js";
 import { trusted, trust, untrust, removeAll } from "./store.js";
 import { status, pullModel, deleteModel } from "./ollama.js";
-import { NOT_REACHABLE, KINDS, el, button, confirmBox, drawCard, drawWhich, drawResult, aiStatus, technical } from "./view.js";
+import { NOT_REACHABLE, KINDS, el, button, confirmBox, drawCard, drawWhich, drawResult, aiStatus, technical, isUnconfirmed, keyLabel } from "./view.js";
 import { MODEL } from "./core/index.js";
 
 const ERRORS = {
@@ -162,21 +162,22 @@ function trustSection() {
     const keys = [...trusted()].sort();
     if (!keys.length) {
       box.replaceChildren(el("p", "status", "None yet. You can trust a sender from a warning that only the local AI "
-        + "raised, if your mail server confirmed who sent it."));
+        + "raised."));
       return;
     }
     const ul = el("ul", "trusted");
     for (const k of keys) {
       const li = el("li");
-      li.append(el("span", "", k), button("Remove", async () => {
+      li.append(el("span", "", isUnconfirmed(k) ? `${keyLabel(k)} (not confirmed by your mail server)` : k), button("Remove", async () => {
         await untrust(k);
         results.clear();
         draw();
       }, "link"));
       ul.append(li);
     }
-    box.replaceChildren(el("p", "status", "The local AI does not warn on its own about emails your mail server "
-      + "confirms come from these senders. Clear warning signs are still shown."), ul);
+    box.replaceChildren(el("p", "status", "The local AI does not warn on its own about emails from these senders "
+      + "(for a domain, only when your mail server confirms the email comes from it). Clear warning signs are still "
+      + "shown."), ul);
   };
   draw();
   box.redraw = draw;

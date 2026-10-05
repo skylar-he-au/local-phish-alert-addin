@@ -77,6 +77,9 @@ export function parseEmail(bytes, path = "") {
   const hdr = (name) => {
     try { return clean(msg.get(name) || ""); } catch { return ""; }
   };
+  // every value of a header, top first (for headers that a message carries several times)
+  const all = (name) => msg.headers.filter(([k]) => k.toLowerCase() === name.toLowerCase())
+    .map(([, v]) => { try { return clean(String(v)); } catch { return ""; } });
   const [text, rawHtml] = body(msg);
   const links = [...text.matchAll(URL_RE)].map((m) => m[0]).concat([...rawHtml.matchAll(HREF_RE)].map((m) => m[1]));
   const anchors = [...rawHtml.matchAll(ANCHOR_RE)].map((m) => [clean(m[2].replace(TAG_RE, "")), m[1]]);
@@ -89,6 +92,8 @@ export function parseEmail(bytes, path = "") {
     auth_results: hdr("Authentication-Results"),
     received_spf: hdr("Received-SPF"),
     dkim_signature: hdr("DKIM-Signature"),
+    // product only (not in the Python pipeline): the organisation gateway's sealed checks (D25)
+    arc_auth_results: all("ARC-Authentication-Results"),
     body: text,
     raw_html: rawHtml,
     links: [...new Set(links)].slice(0, 50),

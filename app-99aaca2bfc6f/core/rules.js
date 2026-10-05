@@ -102,6 +102,37 @@ export function addressOf(frm) {
 // receiving server can be trusted; an organisation sets its own here (MVP-PRD §7.4, R9).
 export const TRUSTED_AUTHSERV = new Set(["mx.google.com"]);
 
+// Organisation mail gateways whose own checks are believed when Exchange Online bypassed
+// composite authentication (decision D25). The gateway checks SPF, DKIM and DMARC where
+// the email arrives from the internet, then seals the result in ARC. It also rewrites
+// links, which breaks DKIM, so Exchange's own checks fail on genuine mail (R9, R10).
+export const TRUSTED_GATEWAYS = new Set(["relay.mimecast.com"]);
+
+/**
+ * The most recent ARC-Authentication-Results: the one with the highest instance i=.
+ * Every ARC sealer numbers its set one above the highest it received, so a set that a
+ * sender forged always has a lower number than the gateway's own.
+ */
+export function latestArcResults(e) {
+  let best = "", bestI = -1;
+  for (const v of e.arc_auth_results || []) {
+    const m = /^\s*i\s*=\s*(\d+)\s*;/.exec(v);
+    const i = m ? Number(m[1]) : -1;
+    if (i > bestI) { bestI = i; best = v; }
+  }
+  return best;
+}
+
+// The gateway's result: authserv-id is a trusted gateway, DMARC passed, and header.from
+// is aligned with From's registrable domain.
+function gatewayConfirms(e, fd) {
+  const a = strip(latestArcResults(e)).toLowerCase();
+  const parts = a.split(";").map((x) => strip(x));
+  if (parts.length < 3 || !TRUSTED_GATEWAYS.has(parts[1])) return false;
+  const m = /header\.from=([a-z0-9.-]+)/.exec(a);
+  return /(?:^|[\s;])dmarc=pass\b/.test(a) && Boolean(m) && registrable(m[1]) === fd;
+}
+
 /**
  * Trust key for the sender if the user's own receiving mail server confirmed who sent
  * it, else null. The key is the registrable domain, or the full address for free
@@ -114,7 +145,9 @@ export const TRUSTED_AUTHSERV = new Set(["mx.google.com"]);
  *   compauth=pass with a 1xx reason and header.from aligned with From. Exchange Online
  *   and Outlook.com stamp this header on every message they receive, and it accounts
  *   for forwarding gateways (reason 130: a trusted ARC sealer), where DMARC fails on
- *   genuine mail (R9).
+ *   genuine mail (R9). Where Exchange bypassed composite authentication (4xx, for
+ *   example reason 451 for mail from the organisation's gateway), a trusted gateway's
+ *   latest ARC-Authentication-Results with DMARC pass and aligned header.from (D25).
  */
 export function authenticatedSender(e, { auth = "compauth", trustedAuthserv = TRUSTED_AUTHSERV } = {}) {
   const a = strip(e.auth_results || "").toLowerCase();
@@ -124,6 +157,9 @@ export function authenticatedSender(e, { auth = "compauth", trustedAuthserv = TR
   if (auth === "compauth") {
     const ca = COMPAUTH.exec(a);
     if (ca && ca[1] === "pass" && /^1/.test(ca[2] || "") && fd && m && registrable(m[1]) === fd) return key();
+    // Exchange bypassed composite authentication (4xx: the organisation lets mail from its
+    // gateway skip it), so the gateway's own sealed checks decide (D25)
+    if (ca && /^4/.test(ca[2] || "") && fd && gatewayConfirms(e, fd)) return key();
   }
   const semi = a.indexOf(";");
   const authserv = strip(semi < 0 ? a : a.slice(0, semi));

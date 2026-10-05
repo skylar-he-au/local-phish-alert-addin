@@ -44,6 +44,7 @@ h1.page { font-size: 16px; margin: 4px 0 8px; }
 progress { width: 100%; }
 ul.trusted { list-style: none; padding: 0; margin: 6px 0 0; }
 ul.trusted li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+ul.trusted li button { flex: none; white-space: nowrap; }
 footer { margin-top: 14px; padding-top: 8px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
 
 /* ---- demo page (demo.html) ---- */

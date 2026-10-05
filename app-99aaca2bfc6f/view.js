@@ -31,6 +31,12 @@ const PROBLEMS = {
 
 const PROVIDER = "Your mail server";
 
+// Trust keys: a registrable domain (or a free-mail address) the mail server confirmed, or,
+// with this prefix, an exact address the user trusted although it was not confirmed.
+export const UNCONFIRMED = "unconfirmed:";
+export const isUnconfirmed = (key) => key.startsWith(UNCONFIRMED);
+export const keyLabel = (key) => (isUnconfirmed(key) ? key.slice(UNCONFIRMED.length) : key);
+
 function el(tag, cls, text) {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
@@ -96,14 +102,23 @@ function senderLine(sender) {
   return p;
 }
 
-// FR-6: offered only on a warning raised by the AI alone, for a sender the mail server confirmed.
+// FR-6: offered only on a warning raised by the AI alone. For a sender the mail server
+// confirmed, the whole domain is trusted; otherwise only the exact address, with a warning
+// that the address could be faked.
 function trustOffer(key, onTrust) {
   const row = el("div", "trust");
+  const who = keyLabel(key);
+  const text = isUnconfirmed(key)
+    ? `${PROVIDER} could not confirm that this email really comes from ${who}, so a scammer could be using `
+      + `that address. Only trust it if you are sure the email is genuine. Future emails from exactly ${who} will `
+      + "no longer be flagged by the local AI alone. Clear warning signs, like a failed sender check or dangerous "
+      + "attachments, are still shown. You can undo this in Settings."
+    : `Only do this if you know ${who} and expected this email. Future emails that ${PROVIDER.toLowerCase()} `
+      + `confirms really come from ${who} will no longer be flagged by the local AI alone. Clear warning signs, `
+      + "like dangerous attachments, are still shown. You can undo this in Settings.";
   const ask = () => row.replaceChildren(confirmBox(
-    `Only do this if you know ${key} and expected this email. Future emails that ${PROVIDER.toLowerCase()} `
-    + `confirms really come from ${key} will no longer be flagged by the local AI alone. Clear warning signs, `
-    + "like dangerous attachments, are still shown. You can undo this in Settings.",
-    `Trust ${key}`,
+    text,
+    isUnconfirmed(key) ? `Trust ${who} anyway` : `Trust ${who}`,
     async () => {
       try {
         await onTrust(key);
@@ -114,7 +129,7 @@ function trustOffer(key, onTrust) {
     () => row.replaceChildren(offer())));
   const offer = () => {
     const p = el("p");
-    p.append(el("span", "label", "Not a scam? "), button(`I know ${key}`, ask, "link"));
+    p.append(el("span", "label", "Not a scam? "), button(`I know ${who}`, ask, "link"));
     return p;
   };
   row.append(offer());
@@ -123,7 +138,9 @@ function trustOffer(key, onTrust) {
 
 function knownLine(known, onUntrust) {
   const p = el("p", "known");
-  p.append(document.createTextNode(`You trust ${known.key}, so the local AI was not asked. `));
+  p.append(document.createTextNode(isUnconfirmed(known.key)
+    ? `You trust ${keyLabel(known.key)}, so the local AI was not asked. ${PROVIDER} did not confirm this sender. `
+    : `You trust ${known.key}, so the local AI was not asked. `));
   if (onUntrust) p.append(button("Stop trusting", () => onUntrust(known.key), "link"));
   return p;
 }
@@ -165,6 +182,7 @@ function aiStatus(r) {
 function technical(r) {
   const items = [...r.rules.rule_reasons];
   items.push(`strong signals: ${r.rules.strong.join(", ") || "none"}`);
+  if (r.auth) items.push(`authentication: ${r.auth.join("; ")}`);
   items.push(`sender confirmed by the mail server: ${r.senderKey || "no"}`);
   if (r.model) {
     items.push(r.model.problem ? `model error: ${r.model.error}`

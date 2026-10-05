@@ -5,7 +5,8 @@
 // parses exactly what the evaluation parsed. Nothing leaves this page except the model
 // request, which the core sends to Ollama on localhost only (NFR-1).
 
-import { parseEmail, runRules, authenticatedSender, decide, alert, pendingAlert, classify, cpSlice } from "./core/index.js";
+import { parseEmail, runRules, authenticatedSender, addressOf, latestArcResults, decide, alert, pendingAlert, classify, cpSlice } from "./core/index.js";
+import { UNCONFIRMED, keyLabel } from "./view.js";
 
 export class CheckError extends Error {
   constructor(code, detail) {
@@ -63,9 +64,29 @@ export async function checkBytes(bytes, { onUpdate = () => {}, classifyImpl = cl
   const rules = runRules(email);
   // who the mail server confirmed sent it (D20), and whether the user trusts them (FR-6)
   const senderKey = authenticatedSender(email);
-  const known = senderKey && trusted.has(senderKey) ? "trusted" : null;
-  const base = { subject: email.subject, from: email.from, senderKey, rules };
-  const show = (decision, reason = "") => alert(email, rules, decision, reason, 3, senderKey);
+  // A sender the mail server could not confirm can still be trusted by the user, per exact
+  // address and marked as unconfirmed; strong rules still warn about it.
+  const address = (addressOf(email.from) || "").toLowerCase();
+  const looseKey = address ? UNCONFIRMED + address : null;
+  const knownKey = senderKey && trusted.has(senderKey) ? senderKey : looseKey && trusted.has(looseKey) ? looseKey : null;
+  const known = knownKey ? "trusted" : null;
+  // the receiving server's and the gateway's verdicts, for the technical details
+  const verdicts = [(/compauth=[a-z]+(?:\s+reason=\w+)?/i.exec(email.auth_results) || ["compauth: none"])[0]];
+  const arc = latestArcResults(email);
+  if (arc) {
+    const serv = (arc.split(";")[1] || "").trim();
+    const dmarc = (/dmarc=[a-z]+/i.exec(arc) || ["dmarc: none"])[0];
+    const hf = (/header\.from=[^\s;]+/i.exec(arc) || [""])[0];
+    verdicts.push(`gateway ${serv}: ${dmarc} ${hf}`.trim());
+  }
+  const base = { subject: email.subject, from: email.from, senderKey, rules, auth: verdicts };
+  const show = (decision, reason = "") => {
+    const a = alert(email, rules, decision, reason, 3, senderKey);
+    if (a.known_sender) a.known_sender.key = knownKey;
+    // a warning raised by the AI alone can be overruled for an unconfirmed sender too
+    if (a.kind === "danger" && a.ai === "used" && !a.trust_offer && looseKey) a.trust_offer = looseKey;
+    return a;
+  };
   if (rules.strong.length || known) return { ...base, alert: show(decide(rules, null, known)), model: null };
 
   const pending = { ...base, alert: pendingAlert(email, rules), model: null };
@@ -112,7 +133,7 @@ export function barFor(result) {
   }
   if (a.kind === "danger") return { type: T.ErrorMessage, message: clip(`Likely phishing or scam. ${a.reasons[0] || ""}`.trim()) };
   if (a.kind === "safe") {
-    if (a.known_sender) return info(`No warning signs found. You trust ${a.known_sender.key}, so the local AI was not asked.`);
+    if (a.known_sender) return info(`No warning signs found. You trust ${keyLabel(a.known_sender.key)}, so the local AI was not asked.`);
     return info(a.tip ? "No warning signs found. Before you act on a payment or phone request, check with the sender another way."
       : "Local Phish Alert found no warning signs (checked on this computer).");
   }
