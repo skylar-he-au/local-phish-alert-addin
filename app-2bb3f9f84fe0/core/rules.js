@@ -175,6 +175,10 @@ export function authenticatedSender(e, { auth = "compauth", trustedAuthserv = TR
     // Exchange bypassed composite authentication (4xx: the organisation lets mail from its
     // gateway skip it), so the gateway's own sealed checks decide (D25)
     if (ca && /^4/.test(ca[2] || "") && fd && gatewayConfirms(e, fd)) return key();
+    // no compauth at all (mail from inside the organisation): Exchange's own DMARC pass (D30)
+    const ms = microsoftResults(e);
+    const dm = DMARC.exec(ms);
+    if (!ca && dm && dm[1] === "pass" && fd && m && registrable(m[1]) === fd) return key();
   }
   const semi = a.indexOf(";");
   const authserv = strip(semi < 0 ? a : a.slice(0, semi));
@@ -191,6 +195,16 @@ export function authenticatedSender(e, { auth = "compauth", trustedAuthserv = TR
 // a compauth= that a sender writes further down is ignored.
 const COMPAUTH = /(?:^|[\s;])compauth=([a-z]+)(?:\s+reason=([0-9a-z]+))?/;
 
+// Exchange Online's own result in the topmost Authentication-Results: its authserv-id is
+// "mx.microsoft.com 1", or it has none and starts with a method. Exchange stamps no
+// compauth on mail from inside the organisation, but still records DMARC (D30).
+function microsoftResults(e) {
+  const a = strip(e.auth_results || "").toLowerCase();
+  const first = strip(a.split(";")[0]);
+  return first.startsWith("mx.microsoft.com") || first.includes("=") ? a : "";
+}
+const DMARC = /(?:^|[\s;])dmarc=([a-z]+)/;
+
 /** Authentication policies: the product's ("compauth") and the evaluated pipeline's ("legacy"). */
 export const AUTH_POLICIES = ["compauth", "legacy"];
 
@@ -206,6 +220,11 @@ export function rAuth(e, policy = "compauth") {
     if (ca[1] === "fail") return [true, 0.25, `auth: ${verdict}`];
     return [false, 0.0, `auth: ${verdict}${fails.length ? ` (raw ${fails.join(",")})` : ""}`];
   }
+  // No compauth (mail from inside the organisation): Exchange's DMARC pass outweighs a raw
+  // SPF failure, since DMARC passes through an aligned DKIM signature (D30). Without a
+  // DMARC pass (none: the domain publishes no policy) the raw failures still count.
+  const dm = policy === "compauth" ? DMARC.exec(microsoftResults(e)) : null;
+  if (dm && dm[1] === "pass") return [false, 0.0, `auth: dmarc=pass${fails.length ? ` (raw ${fails.join(",")})` : ""}`];
   if (fails.length) return [true, 0.25, "auth: " + fails.join(",")];
   return [false, 0.0, "auth: pass/neutral"];
 }
