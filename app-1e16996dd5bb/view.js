@@ -118,7 +118,7 @@ function trustOffer(key, onTrust) {
       + "like dangerous attachments, are still shown. You can undo this in Settings.";
   const ask = () => row.replaceChildren(confirmBox(
     text,
-    isUnconfirmed(key) ? `Trust ${who} anyway` : `Trust ${who}`,
+    isUnconfirmed(key) ? "Trust this address anyway" : `Trust ${who}`,
     async () => {
       try {
         await onTrust(key);

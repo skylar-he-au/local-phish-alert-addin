@@ -27,12 +27,13 @@ summary { cursor: pointer; color: var(--muted); }
 .status { color: var(--muted); margin: 10px 0 0; }
 .again { margin-top: 8px; font: inherit; padding: 4px 10px; }
 .mono { font: 11px/1.4 ui-monospace, Menlo, monospace; overflow-wrap: anywhere; padding-left: 16px; }
-button { font: inherit; }
+button { font: inherit; max-width: 100%; overflow-wrap: anywhere; }
 button.link { border: 0; background: none; padding: 0; color: #0f6cbd; cursor: pointer; text-decoration: underline; }
 button.primary { background: #0f6cbd; color: #fff; border: 1px solid #0f6cbd; border-radius: 4px; padding: 4px 10px; cursor: pointer; }
 .confirm { margin-top: 8px; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: #fff; }
-.confirm p { margin: 0 0 8px; }
+.confirm p { margin: 0 0 8px; overflow-wrap: anywhere; }
 .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.row > button { min-width: 0; }
 .trust, .known { margin-top: 8px; }
 .links { margin: 12px 0 0; }
 .back { margin-bottom: 8px; }
