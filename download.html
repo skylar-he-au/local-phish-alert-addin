@@ -64,14 +64,12 @@
   <ol>
     <li>Open <strong>LocalPhishAlert.dmg</strong> from your Downloads folder.</li>
     <li>Double-click <strong>Install Local Phish Alert</strong>.</li>
-    <li>Follow the steps. The installer sets up everything on the Mac by itself: Ollama (the free app that runs the
-      AI), its setting, and the model. At the end it puts the add-in file in your Downloads folder, opens
+    <li>Follow the steps. The installer sets up everything on the Mac by itself: Ollama (the free engine that runs
+      the AI, in the background with no window), its setting, and the model. At the end it puts the add-in file in your Downloads folder, opens
       Outlook's add-in page and tells you where to click: <em>Add from File</em>, then that file.</li>
   </ol>
-  <p class="muted">When Ollama opens for the first time it shows its own welcome window. Click through it; no Ollama
-    account is needed (if it offers one, choose <em>No thanks, I'll use Ollama locally</em>). Then close the window:
-    Ollama keeps running in the background, with a llama icon in the menu bar, and starts by itself at login.
-    Do not choose <em>Quit Ollama</em>, or the add-in can only do a basic check.</p>
+  <p class="muted">If you already use the Ollama app, the installer uses it instead: then keep Ollama running
+    (llama icon in the menu bar) and do not choose <em>Quit Ollama</em>.</p>
   <div class="note">
     <strong>If macOS says the app "cannot be opened" or is from an unidentified developer:</strong> choose
     <em>Done</em>, open <strong>System Settings → Privacy &amp; Security</strong>, scroll down, choose
@@ -96,13 +94,13 @@
   <ol>
     <li>Open <strong>LocalPhishAlert.dmg</strong> again (or download it again).</li>
     <li>Double-click <strong>Uninstall Local Phish Alert</strong> and follow the steps. It removes the setting, deletes
-      the model unless you keep it for a later reinstall, can move the Ollama app to the Bin too (keeping the model if you like), and opens Outlook's add-in page to remove the add-in there.</li>
+      the model unless you keep it for a later reinstall, removes the Ollama server it installed (or, if you like, your Ollama app), keeps the model if you like, and opens Outlook's add-in page to remove the add-in there.</li>
   </ol>
 
   <h2>What it installs</h2>
   <table>
     <tr><th>Part</th><th>Where</th></tr>
-    <tr><td>Ollama, the app that runs the AI</td><td>Applications (skipped if you already have it)</td></tr>
+    <tr><td>Ollama, the engine that runs the AI</td><td>Its background server, in Library › Application Support (skipped if you already have the Ollama app)</td></tr>
     <tr><td>The model llama3.2:3b, about 2 GB</td><td>Ollama's folder</td></tr>
     <tr><td>One setting that lets the add-in, and nothing else new, use Ollama</td><td>A login item in <code>~/Library/LaunchAgents</code></td></tr>
     <tr><td>The add-in</td><td>Your Outlook; its files are served from this site</td></tr>

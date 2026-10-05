@@ -24,7 +24,8 @@ const KINDS = {
 
 // Why the local AI did not answer (FR-9, S5), and what to do about it.
 const NOT_REACHABLE = "The local AI could not be reached. Check that Ollama is running on this computer, "
-  + "that it allows this add-in, and that the browser may connect to apps on this computer.";
+  + "that it allows this add-in, and that the browser may connect to apps on this computer. On a Mac, opening "
+  + "Install Local Phish Alert again repairs the setup.";
 const PROBLEMS = {
   not_reachable: NOT_REACHABLE,
   origin_refused: NOT_REACHABLE,
