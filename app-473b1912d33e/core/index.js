@@ -6,7 +6,8 @@
 // Ollama on localhost only.
 
 export { parseEmail, clean } from "./parse.js";
-export { runRules, rAuth, AUTH_POLICIES, authenticatedSender, brandImpersonation, TRUSTED_AUTHSERV, TRUSTED_GATEWAYS, latestArcResults, addressOf } from "./rules.js";
+export { unwrapLinks, originalUrl } from "./unwrap.js";
+export { runRules, rAuth, AUTH_POLICIES, authenticatedSender, brandImpersonation, TRUSTED_AUTHSERV, TRUSTED_GATEWAYS, gatewayArcResults, addressOf } from "./rules.js";
 export { decide, alert, pendingAlert, verifyTip, modelView, T_MODEL } from "./fusion.js";
 export { buildPrompt, ollamaRequest, parseModelAnswer, classify, MODEL, OLLAMA_HOST } from "./prompt.js";
 // Code-point string helpers the add-in needs (Python slicing semantics).

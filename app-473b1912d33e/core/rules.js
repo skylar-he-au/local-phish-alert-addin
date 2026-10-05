@@ -108,29 +108,43 @@ export const TRUSTED_AUTHSERV = new Set(["mx.google.com"]);
 // links, which breaks DKIM, so Exchange's own checks fail on genuine mail (R9, R10).
 export const TRUSTED_GATEWAYS = new Set(["relay.mimecast.com"]);
 
+// The receiving server's own authserv-ids. Exchange Online seals an ARC set of its own on
+// top of the gateway's, recording its own (failed) checks.
+const RECEIVER_AUTHSERV = new Set(["mx.microsoft.com"]);
+
+/** authserv-id of an ARC-Authentication-Results value ("i=1; relay.mimecast.com; ..."). */
+function arcServ(v) {
+  return (strip(v.split(";")[1] || "").toLowerCase().split(/\s+/)[0]) || "";
+}
+const arcI = (v) => { const m = /^\s*i\s*=\s*(\d+)\s*;/.exec(v); return m ? Number(m[1]) : -1; };
+
 /**
- * The most recent ARC-Authentication-Results: the one with the highest instance i=.
- * Every ARC sealer numbers its set one above the highest it received, so a set that a
- * sender forged always has a lower number than the gateway's own.
+ * The gateway's ARC-Authentication-Results: the latest set (highest instance i=), below any
+ * sets the receiving server added on top of it. Every ARC sealer numbers its set one above
+ * the highest it received, so a set that a sender forged always has a lower number than
+ * the gateway's own. Returns "" if there is none.
  */
-export function latestArcResults(e) {
-  let best = "", bestI = -1;
-  for (const v of e.arc_auth_results || []) {
-    const m = /^\s*i\s*=\s*(\d+)\s*;/.exec(v);
-    const i = m ? Number(m[1]) : -1;
-    if (i > bestI) { bestI = i; best = v; }
+export function gatewayArcResults(e) {
+  const sets = (e.arc_auth_results || []).filter((v) => arcI(v) > 0).sort((x, y) => arcI(y) - arcI(x));
+  let k = 0;
+  while (k < sets.length && RECEIVER_AUTHSERV.has(arcServ(sets[k]))) {
+    if (k + 1 < sets.length && arcI(sets[k + 1]) !== arcI(sets[k]) - 1) return "";
+    k++;
   }
-  return best;
+  return sets[k] || "";
 }
 
 // The gateway's result: authserv-id is a trusted gateway, DMARC passed, and header.from
-// is aligned with From's registrable domain.
+// is aligned with From's registrable domain. If the receiving server checked the ARC
+// chain and found it broken (arc=fail), nothing is believed.
 function gatewayConfirms(e, fd) {
-  const a = strip(latestArcResults(e)).toLowerCase();
-  const parts = a.split(";").map((x) => strip(x));
-  if (parts.length < 3 || !TRUSTED_GATEWAYS.has(parts[1])) return false;
-  const m = /header\.from=([a-z0-9.-]+)/.exec(a);
-  return /(?:^|[\s;])dmarc=pass\b/.test(a) && Boolean(m) && registrable(m[1]) === fd;
+  const g = strip(gatewayArcResults(e)).toLowerCase();
+  if (!g || !TRUSTED_GATEWAYS.has(arcServ(g))) return false;
+  const receiver = [e.auth_results || "", ...(e.arc_auth_results || []).filter((v) => RECEIVER_AUTHSERV.has(arcServ(v)))]
+    .join(" ").toLowerCase();
+  if (/(?:^|[\s;(])arc=fail\b/.test(receiver)) return false;
+  const m = /header\.from=([a-z0-9.-]+)/.exec(g);
+  return /(?:^|[\s;])dmarc=pass\b/.test(g) && Boolean(m) && registrable(m[1]) === fd;
 }
 
 /**
@@ -147,7 +161,8 @@ function gatewayConfirms(e, fd) {
  *   for forwarding gateways (reason 130: a trusted ARC sealer), where DMARC fails on
  *   genuine mail (R9). Where Exchange bypassed composite authentication (4xx, for
  *   example reason 451 for mail from the organisation's gateway), a trusted gateway's
- *   latest ARC-Authentication-Results with DMARC pass and aligned header.from (D25).
+ *   ARC-Authentication-Results (below Exchange's own set) with DMARC pass and aligned
+ *   header.from (D25).
  */
 export function authenticatedSender(e, { auth = "compauth", trustedAuthserv = TRUSTED_AUTHSERV } = {}) {
   const a = strip(e.auth_results || "").toLowerCase();
@@ -250,7 +265,8 @@ export function rSender(e) {
   return [w >= 0.15, Math.min(w, 0.3), "sender: " + (reasons.join("; ") || "consistent")];
 }
 
-const DOMAIN_IN_LABEL = /([a-z0-9-]+\.[a-z]{2,})/;
+// the whole host name, so that "woolworths.com.au" is not read as "woolworths.com"
+const DOMAIN_IN_LABEL = /((?:[a-z0-9-]+\.)+[a-z]{2,})/;
 const RAW_IP = /^\p{Nd}{1,3}(\.\p{Nd}{1,3}){3}$/u;
 
 export function rLinks(e) {

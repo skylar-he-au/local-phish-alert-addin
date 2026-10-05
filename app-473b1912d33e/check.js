@@ -5,7 +5,7 @@
 // parses exactly what the evaluation parsed. Nothing leaves this page except the model
 // request, which the core sends to Ollama on localhost only (NFR-1).
 
-import { parseEmail, runRules, authenticatedSender, addressOf, latestArcResults, decide, alert, pendingAlert, classify, cpSlice } from "./core/index.js";
+import { parseEmail, unwrapLinks, runRules, authenticatedSender, addressOf, gatewayArcResults, decide, alert, pendingAlert, classify, cpSlice } from "./core/index.js";
 import { UNCONFIRMED, keyLabel } from "./view.js";
 
 export class CheckError extends Error {
@@ -60,7 +60,8 @@ export const SLOW_MS = 8000;
  * latency_s, error, problem}.
  */
 export async function checkBytes(bytes, { onUpdate = () => {}, classifyImpl = classify, trusted = new Set(), timeoutMs } = {}) {
-  const email = parseEmail(bytes);
+  // links rewritten by the organisation's gateway are put back first (R10, D27)
+  const email = unwrapLinks(parseEmail(bytes));
   const rules = runRules(email);
   // who the mail server confirmed sent it (D20), and whether the user trusts them (FR-6)
   const senderKey = authenticatedSender(email);
@@ -72,13 +73,15 @@ export async function checkBytes(bytes, { onUpdate = () => {}, classifyImpl = cl
   const known = knownKey ? "trusted" : null;
   // the receiving server's and the gateway's verdicts, for the technical details
   const verdicts = [(/compauth=[a-z]+(?:\s+reason=\w+)?/i.exec(email.auth_results) || ["compauth: none"])[0]];
-  const arc = latestArcResults(email);
+  const arc = gatewayArcResults(email);
   if (arc) {
     const serv = (arc.split(";")[1] || "").trim();
     const dmarc = (/dmarc=[a-z]+/i.exec(arc) || ["dmarc: none"])[0];
     const hf = (/header\.from=[^\s;]+/i.exec(arc) || [""])[0];
     verdicts.push(`gateway ${serv}: ${dmarc} ${hf}`.trim());
   }
+  const arcCheck = /(?:^|[\s;(])(arc=[a-z]+)/i.exec([email.auth_results, ...email.arc_auth_results].join(" "));
+  if (arcCheck) verdicts.push(`receiver's ARC check: ${arcCheck[1]}`);
   const base = { subject: email.subject, from: email.from, senderKey, rules, auth: verdicts };
   const show = (decision, reason = "") => {
     const a = alert(email, rules, decision, reason, 3, senderKey);
