@@ -295,10 +295,16 @@ export function rAttachment(e) {
   return [bad.length > 0, bad.length ? 0.2 : 0.0, "attachment: " + (bad.slice(0, 3).join(", ") || "none risky")];
 }
 
+const LETTER_ENTITY = /&#(?:4[89]|5[0-7]|6[5-9]|[78]\d|9[07-9]|90|1[01]\d|12[0-2]);/g;
+const SPLIT_WORD = /[A-Za-z][\u200b-\u200f\u2060\u00ad\ufeff]+[A-Za-z]/;
+
 export function rObfuscation(e) {
   const reasons = [];
-  if ((e.raw_html.match(/&#\p{Nd}{2,3};/gu) || []).length > 20) reasons.push("heavy HTML-entity encoding");
-  if (/[​-‏⁠­﻿]/.test(e.raw_html)) reasons.push("invisible unicode characters");
+  // Only entities of letters and digits count, and only invisible characters inside a
+  // word: newsletters pad their preview text with &#847;, &zwnj; or soft hyphens, which
+  // says nothing about phishing (decision D29).
+  if ((e.raw_html.match(LETTER_ENTITY) || []).length > 20) reasons.push("heavy HTML-entity encoding");
+  if (SPLIT_WORD.test(e.raw_html + "\n" + e.body)) reasons.push("invisible unicode characters");
   for (const url of e.links) {
     const d = domainOf(url);
     if (d && [...d].some((c) => c.codePointAt(0) > 127)) { reasons.push(`non-ascii link domain ${d}`); break; }
