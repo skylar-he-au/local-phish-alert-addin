@@ -60,7 +60,7 @@ function renderList() {
     b.append(el("div", "from", senderName(e.shown.from)), el("div", "subj", e.shown.subject || "(no subject)"),
       el("div", "prev", e.shown.body.replace(/\s+/g, " ").trim().slice(0, 110)));
     if (e.result && e.result.alert.kind !== "checking") b.append(el("div", `tag ${e.result.alert.kind}`, {
-      danger: "Warning", safe: "No warning signs", unchecked: "Basic check only" }[e.result.alert.kind] || ""));
+      danger: "Warning", caution: "Check first", safe: "No warning signs", unchecked: "Basic check only" }[e.result.alert.kind] || ""));
     li.append(b);
     ul.append(li);
   }

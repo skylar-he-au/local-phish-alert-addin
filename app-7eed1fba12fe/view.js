@@ -9,6 +9,11 @@ const KINDS = {
     look: "danger", title: "Likely phishing or scam",
     advice: "Don't click links, open attachments or send money. Check with the sender another way.",
   },
+  caution: {
+    look: "neutral", title: "Check before you act",
+    advice: "The sender is confirmed, but the local AI has doubts about this email. If it asks you to click, pay or "
+      + "sign in, check with the sender another way first.",
+  },
   safe: { look: "safe", title: "No warning signs found", advice: "" },
   unchecked: {
     look: "neutral", title: "Only a basic check was done",
@@ -150,7 +155,7 @@ function drawResult(r, actions = {}) {
   const a = r.alert;
   const k = KINDS[a.kind] || { look: "neutral", title: `Result: ${a.kind}`, advice: "" };
   const extra = [];
-  if (a.kind === "danger" && a.sender && a.sender.address) extra.push(senderLine(a.sender));
+  if ((a.kind === "danger" || a.kind === "caution") && a.sender && a.sender.address) extra.push(senderLine(a.sender));
   if (a.reasons.length) extra.push(list(a.reasons, "reasons"));
   if (a.trust_offer && actions.onTrust) extra.push(trustOffer(a.trust_offer, actions.onTrust));
   if (a.known_sender) extra.push(knownLine(a.known_sender, actions.onUntrust));

@@ -88,6 +88,10 @@ export async function checkBytes(bytes, { onUpdate = () => {}, classifyImpl = cl
     if (a.known_sender) a.known_sender.key = knownKey;
     // a warning raised by the AI alone can be overruled for an unconfirmed sender too
     if (a.kind === "danger" && a.ai === "used" && !a.trust_offer && looseKey) a.trust_offer = looseKey;
+    // For a confirmed sender, a warning from the AI alone is shown as a caution (D28): the
+    // model cannot tell a genuine newsletter from phishing sent from the attacker's own
+    // domain (both get 0.8), so it still speaks up, but not as "likely phishing".
+    if (a.kind === "danger" && a.ai === "used" && senderKey && !rules.strong.length) a.kind = "caution";
     return a;
   };
   if (rules.strong.length || known) return { ...base, alert: show(decide(rules, null, known)), model: null };
@@ -135,6 +139,9 @@ export function barFor(result) {
       : "Local Phish Alert is checking this email on your computer…" };
   }
   if (a.kind === "danger") return { type: T.ErrorMessage, message: clip(`Likely phishing or scam. ${a.reasons[0] || ""}`.trim()) };
+  if (a.kind === "caution") {
+    return info(`Check before you act: ${a.sender.domain} is confirmed as the sender, but the local AI has doubts. Open Local Phish Alert for details.`);
+  }
   if (a.kind === "safe") {
     if (a.known_sender) return info(`No warning signs found. You trust ${keyLabel(a.known_sender.key)}, so the local AI was not asked.`);
     return info(a.tip ? "No warning signs found. Before you act on a payment or phone request, check with the sender another way."
